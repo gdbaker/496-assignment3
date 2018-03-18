@@ -1,0 +1,8 @@
+
+*.html
+Go3/.DS_Store
+*.pyc
+gtp_log
+*.dat
+util/.DS_Store
+.DS_Store
