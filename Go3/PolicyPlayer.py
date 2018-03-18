@@ -3,7 +3,7 @@ import os, sys
 utilpath = sys.path[0] + "/../util/"
 sys.path.append(utilpath)
 
-from gtp_connection import GtpConnection  
+from gtp_connection_go3 import GtpConnectionGo3
 from board_util import GoBoardUtil
 from simple_board import SimpleGoBoard
 from ucb import runUcb
@@ -46,7 +46,7 @@ def run():
     start the gtp connection and wait for commands.
     """
     board = SimpleGoBoard(7)
-    con = GtpConnection(PolicyPlayer(), board)
+    con = GtpConnectionGo3(PolicyPlayer(), board)
     con.start_connection()
 
 if __name__=='__main__':
