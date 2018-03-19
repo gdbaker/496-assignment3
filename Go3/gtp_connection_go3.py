@@ -55,9 +55,17 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 			if self.board.last_move is not None:
 
 				# checks if atari capture possible
-				single_liberty = self.board._single_liberty(self.board.last_move, GoBoardUtil.opponent(self.board.current_player))
-				if single_liberty is not None and self.board.check_legal(single_liberty, self.board.current_player):
-					return [single_liberty], "AtariCapture"
+				single_liberty = []
+				liberty_point = self.board._single_liberty(self.board.last_move, GoBoardUtil.opponent(self.board.current_player))
+				
+				if liberty_point is not None and self.board.check_legal(liberty_point, self.board.current_player):
+					single_liberty.append(liberty_point)
+
+					#checks for selfatari
+					single_liberty = GoBoardUtil.filter_moves(self.board, single_liberty, self.go_engine.check_selfatari)
+
+					if len(single_liberty) > 0:
+						return single_liberty, "AtariCapture"
 
 			pattern_moves = []
 			pattern_moves = GoBoardUtil.generate_pattern_moves(self.board)
