@@ -37,9 +37,7 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 		"""
 		Return list of policy moves for the current_player of the board
 		"""
-		policy_moves, type_of_move = self.generate_all_policy_moves(self.board,
-														self.go_engine.use_pattern,
-														self.go_engine.check_selfatari)
+		policy_moves, type_of_move = self.generate_all_policy_moves()
 		if len(policy_moves) == 0:
 			self.respond("Pass")
 		else:
@@ -47,19 +45,27 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 			self.respond(response)
 
 
-	def generate_all_policy_moves(self, board,pattern,check_selfatari):
+	def generate_all_policy_moves(self):
 		"""
 			generate a list of policy moves on board for board.current_player.
 			Use in UI only. For playing, use generate_move_with_filter
 			which is more efficient
 		"""
-		if pattern:
+		if self.go_engine.use_pattern:
+			if self.board.last_move is not None:
+
+				# checks if atari capture possible
+				single_liberty = self.board._single_liberty(self.board.last_move, GoBoardUtil.opponent(self.board.current_player))
+				if single_liberty is not None:
+					return [single_liberty], "AtariCapture"
+
 			pattern_moves = []
-			pattern_moves = GoBoardUtil.generate_pattern_moves(board)
-			pattern_moves = GoBoardUtil.filter_moves(board, pattern_moves, check_selfatari)
+			pattern_moves = GoBoardUtil.generate_pattern_moves(self.board)
+			pattern_moves = GoBoardUtil.filter_moves(self.board, pattern_moves, self.go_engine.check_selfatari)
 			if len(pattern_moves) > 0:
+				print(pattern_moves)
 				return pattern_moves, "Pattern"
-		return GoBoardUtil.generate_random_moves(board,True), "Random"
+		return GoBoardUtil.generate_random_moves(self.board,True), "Random"
 
 
 
