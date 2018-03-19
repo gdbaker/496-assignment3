@@ -56,7 +56,7 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 
 				# checks if atari capture possible
 				single_liberty = self.board._single_liberty(self.board.last_move, GoBoardUtil.opponent(self.board.current_player))
-				if single_liberty is not None:
+				if single_liberty is not None and self.board.check_legal(single_liberty, self.board.current_player):
 					return [single_liberty], "AtariCapture"
 
 			pattern_moves = []
