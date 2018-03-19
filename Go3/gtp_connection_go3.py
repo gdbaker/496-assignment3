@@ -37,7 +37,7 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 		"""
 		Return list of policy moves for the current_player of the board
 		"""
-		policy_moves, type_of_move = self.generate_all_policy_moves()
+		policy_moves, type_of_move = self.generate_moves()
 		if len(policy_moves) == 0:
 			self.respond("Pass")
 		else:
@@ -45,11 +45,10 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 			self.respond(response)
 
 
-	def generate_all_policy_moves(self):
+	def generate_moves(self):
 		"""
 			generate a list of policy moves on board for board.current_player.
-			Use in UI only. For playing, use generate_move_with_filter
-			which is more efficient
+			calls function from util folder for fallback
 		"""
 		if self.go_engine.use_pattern:
 			if self.board.last_move is not None:
@@ -57,7 +56,7 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 				# checks if atari capture possible
 				single_liberty = []
 				liberty_point = self.board._single_liberty(self.board.last_move, GoBoardUtil.opponent(self.board.current_player))
-				
+
 				if liberty_point is not None and self.board.check_legal(liberty_point, self.board.current_player):
 					single_liberty.append(liberty_point)
 
@@ -67,20 +66,42 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 					if len(single_liberty) > 0:
 						return single_liberty, "AtariCapture"
 
-			pattern_moves = []
-			pattern_moves = GoBoardUtil.generate_pattern_moves(self.board)
-			pattern_moves = GoBoardUtil.filter_moves(self.board, pattern_moves, self.go_engine.check_selfatari)
-			if len(pattern_moves) > 0:
-				print(pattern_moves)
-				return pattern_moves, "Pattern"
-		return GoBoardUtil.generate_random_moves(self.board,True), "Random"
+
+				#checks for atari defense
+				defense_points = self.try_to_defend()
+				if len(defense_points) > 0:
+					return defense_points, "AtariDefense"
 
 
 
+		policy_moves, type_of_move = GoBoardUtil.generate_all_policy_moves(self.board, self.go_engine.use_pattern, self.go_engine.check_selfatari)
+		return policy_moves, type_of_move
+
+
+	def try_to_defend(self):
+		neighbours = self.board._neighbors(self.board.last_move)
+		plays = []
+		for point in neighbours:
+			if self.board.get_color(point) == self.board.current_player:
+				liberty_point = self.board._single_liberty(point, self.board.current_player)
+
+				if liberty_point is not None:
+					# point is block of current player and is in atari
+					plays.extend(self.try_runaway(point))
+		return plays
 
 
 
+	def try_runaway(self, runner):
+		works = []
+		neighbours = self.board._neighbors(runner)
+		for point in neighbours:
+			if self.board.get_color(point) == EMPTY and self.board.check_legal(point, self.board.current_player):
+				tempBoard = self.board.copy()
+				tempBoard.move(point, tempBoard.current_player)
+				if tempBoard._liberty(point, self.board.current_player) > 1:
+					works.append(point)
 
-
+		return works
 
 
