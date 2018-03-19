@@ -69,6 +69,7 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 
 				#checks for atari defense
 				defense_points = self.try_to_defend()
+				defense_points = GoBoardUtil.filter_moves(self.board, defense_points, self.go_engine.check_selfatari)
 				if len(defense_points) > 0:
 					return defense_points, "AtariDefense"
 
@@ -103,5 +104,9 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 					works.append(point)
 
 		return works
+
+	def try_capture(self, capPoint):
+		works = []
+
 
 
