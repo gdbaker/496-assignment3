@@ -84,30 +84,31 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 		"""
 		neighbours = self.board._neighbors(self.board.last_move)
 		plays = []
+		print("defend")
 		for point in neighbours:
 			if self.board.get_color(point) == self.board.current_player:
 				liberty_point = self.board._single_liberty(point, self.board.current_player)
 
 				if liberty_point is not None:
+					print("atari")
 					# point is block of current player and is in atari
-					plays.extend(self.try_runaway(point))
+					plays.extend(self.try_runaway(liberty_point))
 					plays.extend(self.try_capture(point))
 		return plays
 
 
 
-	def try_runaway(self, runner):
+	def try_runaway(self, point):
 		"""
 			finds possible defense by running away
 		"""
 		works = []
-		neighbours = self.board._neighbors(runner)
-		for point in neighbours:
-			if self.board.get_color(point) == EMPTY and self.board.check_legal(point, self.board.current_player):
-				tempBoard = self.board.copy()
-				tempBoard.move(point, tempBoard.current_player)
-				if tempBoard._liberty(point, self.board.current_player) > 1:
-					works.append(point)
+		if self.board.get_color(point) == EMPTY and self.board.check_legal(point, self.board.current_player):
+			tempBoard = self.board.copy()
+			tempBoard.move(point, tempBoard.current_player)
+
+			if tempBoard._liberty(point, self.board.current_player) > 1:
+				works.append(point)
 
 		return works
 
@@ -116,7 +117,7 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 			finds possible defense by capturing opponent
 		"""
 		works = []
-		opponentBlocks = self.modified_flood_fill(capPoint)
+		opponentBlocks = self.modified_flood_fill(capPoint, GoBoardUtil.opponent(self.board.current_player))
 
 		for point in opponentBlocks:
 			liberty = self.board._single_liberty(point, GoBoardUtil.opponent(self.board.current_player))
@@ -126,7 +127,7 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 
 		return works
 
-	def modified_flood_fill(self, capPoint):
+	def modified_flood_fill(self, capPoint, colour):
 		"""
 			modified floodfill from util folder to 
 			return the adjacent opponent points
@@ -142,7 +143,7 @@ class GtpConnectionGo3(gtp_connection.GtpConnection):
 				if fboard[n] == self.board.current_player:
 					fboard[n] = FLOODFILL
 					pointstack.append(n)
-				elif fboard[n] ==  GoBoardUtil.opponent(self.board.current_player):
+				elif fboard[n] ==  colour:
 					fboard[n] = BORDER
 					opponentBlocks.append(n)
 		return opponentBlocks

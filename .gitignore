@@ -6,3 +6,4 @@ gtp_log
 *.dat
 util/.DS_Store
 .DS_Store
+test.gtp
