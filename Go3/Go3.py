@@ -1,17 +1,17 @@
-#!/Library/Frameworks/Python.framework/Versions/3.6/bin/python3
 #!/usr/bin/python3
 import os, sys
 utilpath = sys.path[0] + "/../util/"
 sys.path.append(utilpath)
 
 from gtp_connection_go3 import GtpConnectionGo3
-from board_util import GoBoardUtil
+from GoBoardUtil2 import GoBoardUtil2
 from simple_board import SimpleGoBoard
 from ucb import runUcb
 import numpy as np
 import argparse
 import sys
 import copy
+import generate_moves as Gm
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--sim', type=int, default=10, help='number of simulations per move, so total playouts=sim*legal_moves')
@@ -34,7 +34,7 @@ def writeMoves(board, moves, count, numSimulations):
     for i in range(len(moves)):
         if moves[i] != None:
             x, y = board._point_to_coord(moves[i])
-            gtp_moves.append((GoBoardUtil.format_point((x, y)),
+            gtp_moves.append((GoBoardUtil2.format_point((x, y)),
                           float(count[i])/float(numSimulations)))
         else:
             gtp_moves.append(('Pass',float(count[i])/float(numSimulations)))
@@ -64,11 +64,11 @@ class Go3Player(object):
         self.check_selfatari = move_filter
  
     def simulate(self, board, cboard, move, toplay):
-        GoBoardUtil.copyb2b(board,cboard)
+        GoBoardUtil2.copyb2b(board,cboard)
         assert cboard.board.all() == board.board.all()
         cboard.move(move, toplay)
-        opp = GoBoardUtil.opponent(toplay)
-        return GoBoardUtil.playGame(cboard,
+        opp = GoBoardUtil2.opponent(toplay)
+        return GoBoardUtil2.playGame(cboard,
                 opp,
                 komi=self.komi,
                 limit=self.limit,
@@ -88,9 +88,9 @@ class Go3Player(object):
         cboard = board.copy()
         emptyPoints = board.get_empty_points()
         moves = []
-        for p in emptyPoints:
-            if board.check_legal(p, toplay):
-                moves.append(p)
+
+        # use custom policy
+        moves, _ = Gm.generate_moves(board, self.use_pattern, self.check_selfatari)
         if not moves: # pass move only, no need to simulate
             return None
         moves.append(None) # None for Pass
